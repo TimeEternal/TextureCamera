@@ -16,6 +16,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <GL/FreeImage.h>
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>
 #include <nlohmann/json.hpp>

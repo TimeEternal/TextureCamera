@@ -44,11 +44,21 @@ void saveSceneImage(const string fileName)
 	GLsizei bufferSize = ViewPort[2] * ViewPort[3] * sizeof(GLubyte)*ColorChannel;
 	GLubyte * ImgData = (GLubyte*)malloc(bufferSize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glReadPixels(ViewPort[0], ViewPort[1], ViewPort[2], ViewPort[3], GL_RGBA, GL_UNSIGNED_BYTE, ImgData);
-	stbi__vertical_flip(ImgData, ViewPort[2], ViewPort[3], ColorChannel * sizeof(stbi_uc));
-	stbi_write_png(fileName.c_str(),ViewPort[2], ViewPort[3],ColorChannel, ImgData, 0);
+	glReadPixels(ViewPort[0], ViewPort[1], ViewPort[2], ViewPort[3], GL_BGRA_EXT, GL_UNSIGNED_BYTE, ImgData);
+
+	// stbi save image
+	//stbi__vertical_flip(ImgData, ViewPort[2], ViewPort[3], ColorChannel * sizeof(stbi_uc));
+	//stbi_write_png(fileName.c_str(),ViewPort[2], ViewPort[3],ColorChannel, ImgData, 0);
+	//free(ImgData);
+
+	//freeImage save image
+	FIBITMAP* dst = FreeImage_ConvertFromRawBits(ImgData, ViewPort[2], ViewPort[3], 4 * ViewPort[2], 32,
+		FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, FALSE);
 	free(ImgData);
+	FreeImage_Save(FIF_PNG, dst, fileName.c_str());
+	FreeImage_Unload(dst);
 }
+
 
 void StbiLoadGLTexture(GLuint *texture, char *png_file_name, int texture_id) {
 	int width, height, nrChannels;
@@ -87,8 +97,11 @@ void material() {
 void DrawFlat() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清除屏幕和深度缓存
 	glLoadIdentity();         // 重置当前的模型观察矩阵
-	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
-	material();
+	if (use_main)
+		gluLookAt(16.8766, -7.7111, -212.7446, 16.9178, -7.5148, -211.7650, 0.0163, -0.9805, 0.1958);
+	else
+		gluLookAt(-5.1259, -8.2751, -196.5466, -4.5663, -8.0399, -195.7519, 0.2259, -0.9659, 0.1268);
+
 	glTranslatef(posx, posy, -posz);         // 移入屏幕 5 个单位
 	glRotatef(xrot, 1.0f, 0.0f, 0.0f);         // 绕X轴旋转
 	glRotatef(yrot, 0.0f, 1.0f, 0.0f);         // 绕Y轴旋转
@@ -111,7 +124,6 @@ void DrawFlat() {
 	glEnd();
 
 	glFlush();
-	glutSwapBuffers();
 }
 
 //前后 顶底 左右
@@ -120,8 +132,11 @@ void DrawCube(void)         // 从这里开始进行所有的绘制
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清除屏幕和深度缓存
 
 	glLoadIdentity();         // 重置当前的模型观察矩阵
-	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
-	material();
+	if (use_main)
+		gluLookAt(16.8766, -7.7111, -212.7446, 16.9178, -7.5148, -211.7650, 0.0163, -0.9805, 0.1958);
+	else
+		gluLookAt(-5.1259, -8.2751, -196.5466, -4.5663, -8.0399, -195.7519, 0.2259, -0.9659, 0.1268);
+
 	glTranslatef(posx, posy, -posz);         // 移入屏幕 5 个单位
 	glRotatef(xrot, 1.0f, 0.0f, 0.0f);         // 绕X轴旋转
 	glRotatef(yrot, 0.0f, 1.0f, 0.0f);         // 绕Y轴旋转
@@ -150,53 +165,52 @@ void DrawCube(void)         // 从这里开始进行所有的绘制
 	}
 	glEnd();
 
-	//glBindTexture(GL_TEXTURE_2D, texture[1]);
-	//glBegin(GL_QUADS);													 // 后面
-	//glNormal3f(0, 0, -1);
-	//glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen/2.0, -ylen/2.0, -bzlen / 2.0); // 纹理和四边形的右下
-	//glTexCoord2f(1.0f, 1.0f); glVertex3f(-xlen/2.0, ylen/2.0, -zlen / 2.0); // 纹理和四边形的右上
-	//glTexCoord2f(0.0f, 1.0f); glVertex3f(xlen/2.0, ylen/2.0, -zlen / 2.0); // 纹理和四边形的左上
-	//glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen/2.0, -ylen/2.0, -bzlen / 2.0); // 纹理和四边形的左下
-	//glEnd();
+	glBindTexture(GL_TEXTURE_2D, texture[1]);
+	glBegin(GL_QUADS);													 // 后面
+	glNormal3f(0, 0, -1);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen/2.0, -ylen/2.0, -bzlen / 2.0); // 纹理和四边形的右下
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-xlen/2.0, ylen/2.0, -zlen / 2.0); // 纹理和四边形的右上
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(xlen/2.0, ylen/2.0, -zlen / 2.0); // 纹理和四边形的左上
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen/2.0, -ylen/2.0, -bzlen / 2.0); // 纹理和四边形的左下
+	glEnd();
 
-	//glBindTexture(GL_TEXTURE_2D, texture[2]);
-	//glBegin(GL_QUADS);	// 顶面
-	//glNormal3f(0, 1, 0);
-	//glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen/2.0, ylen/2.0, -zlen / 2.0); // 纹理和四边形的左上
-	//glTexCoord2f(0.0f, 0.0f); glVertex3f(-xlen/2.0, ylen/2.0, zlen / 2.0); // 纹理和四边形的左下
-	//glTexCoord2f(1.0f, 0.0f); glVertex3f(xlen/2.0, ylen/2.0, zlen / 2.0); // 纹理和四边形的右下
-	//glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen/2.0, ylen/2.0, -zlen / 2.0); // 纹理和四边形的右上
-	//glEnd();
+	glBindTexture(GL_TEXTURE_2D, texture[2]);
+	glBegin(GL_QUADS);	// 顶面
+	glNormal3f(0, 1, 0);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen/2.0, ylen/2.0, -zlen / 2.0); // 纹理和四边形的左上
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-xlen/2.0, ylen/2.0, zlen / 2.0); // 纹理和四边形的左下
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(xlen/2.0, ylen/2.0, zlen / 2.0); // 纹理和四边形的右下
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen/2.0, ylen/2.0, -zlen / 2.0); // 纹理和四边形的右上
+	glEnd();
 
-	//glBindTexture(GL_TEXTURE_2D, texture[3]);
-	//glBegin(GL_QUADS);															 // 底面
-	//glNormal3f(0, -1, 0);
-	//glTexCoord2f(1.0f, 1.0f); glVertex3f(-bxlen/2.0, -ylen/2.0, -bzlen / 2.0); // 纹理和四边形的右上
-	//glTexCoord2f(0.0f, 1.0f); glVertex3f(bxlen/2.0, -ylen/2.0, -bzlen / 2.0); // 纹理和四边形的左上
-	//glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen/2.0, -ylen/2.0, bzlen / 2.0); // 纹理和四边形的左下
-	//glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen/2.0, -ylen/2.0, bzlen / 2.0); // 纹理和四边形的右下
-	//glEnd();
+	glBindTexture(GL_TEXTURE_2D, texture[3]);
+	glBegin(GL_QUADS);															 // 底面
+	glNormal3f(0, -1, 0);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-bxlen/2.0, -ylen/2.0, -bzlen / 2.0); // 纹理和四边形的右上
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(bxlen/2.0, -ylen/2.0, -bzlen / 2.0); // 纹理和四边形的左上
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen/2.0, -ylen/2.0, bzlen / 2.0); // 纹理和四边形的左下
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen/2.0, -ylen/2.0, bzlen / 2.0); // 纹理和四边形的右下
+	glEnd();
 
-	//glBindTexture(GL_TEXTURE_2D, texture[4]);
-	//glBegin(GL_QUADS);// 左面
-	//glNormal3f(-1, 0, 0);
-	//glTexCoord2f(0.0f, 0.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的左下
-	//glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的右下
-	//glTexCoord2f(1.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的右上
-	//glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的左上
-	//glEnd();
+	glBindTexture(GL_TEXTURE_2D, texture[4]);
+	glBegin(GL_QUADS);// 左面
+	glNormal3f(-1, 0, 0);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的左下
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的右下
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的右上
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的左上
+	glEnd();
 
-	//glBindTexture(GL_TEXTURE_2D, texture[5]);
-	//glBegin(GL_QUADS);	// 右面
-	//glNormal3f(1, 0, 0);
-	//glTexCoord2f(1.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的右下
-	//glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的右上
-	//glTexCoord2f(0.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的左上
-	//glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的左下
-	//glEnd();
+	glBindTexture(GL_TEXTURE_2D, texture[5]);
+	glBegin(GL_QUADS);	// 右面
+	glNormal3f(1, 0, 0);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的右下
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的右上
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的左上
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的左下
+	glEnd();
 
 	glFlush(); 
-	glutSwapBuffers();
 }
 
 
@@ -204,10 +218,13 @@ void DrawCube(void)         // 从这里开始进行所有的绘制
 void DrawCylinder() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清除屏幕和深度缓存
 	
-	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
+	glLoadIdentity();         // 重置当前的模型观察矩阵
+	if (use_main)
+		gluLookAt(16.8766, -7.7111, -212.7446, 16.9178, -7.5148, -211.7650, 0.0163, -0.9805, 0.1958);
+	else
+		gluLookAt(-5.1259, -8.2751, -196.5466, -4.5663, -8.0399, -195.7519, 0.2259, -0.9659, 0.1268);
 
 	glPushMatrix();
-	material();
 	glTranslatef(posx, posy, -posz);         // 移入屏幕 
 	glRotatef(xrot, 1.0f, 0.0f, 0.0f);         // 绕X轴旋转
 	glRotatef(yrot, 0.0f, 1.0f, 0.0f);         // 绕Y轴旋转
@@ -315,7 +332,6 @@ void DrawGyrator() {
 	glEnd();
 
 	glFlush();
-	glutSwapBuffers();
 }
 
 void DrawTusi(void)         // 从这里开始进行所有的绘制
@@ -323,8 +339,11 @@ void DrawTusi(void)         // 从这里开始进行所有的绘制
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清除屏幕和深度缓存
 
 	glLoadIdentity();         // 重置当前的模型观察矩阵
-	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
-	material();
+	if (use_main)
+		gluLookAt(16.8766, -7.7111, -212.7446, 16.9178, -7.5148, -211.7650, 0.0163, -0.9805, 0.1958);
+	else
+		gluLookAt(-5.1259, -8.2751, -196.5466, -4.5663, -8.0399, -195.7519, 0.2259, -0.9659, 0.1268);
+
 	glTranslatef(posx, posy, -posz);         // 移入屏幕 5 个单位
 	glRotatef(xrot, 1.0f, 0.0f, 0.0f);         // 绕X轴旋转
 	glRotatef(yrot, 0.0f, 1.0f, 0.0f);         // 绕Y轴旋转
@@ -379,72 +398,8 @@ void DrawTusi(void)         // 从这里开始进行所有的绘制
 	glEnd();
 
 	glFlush();
-	glutSwapBuffers();
 }
-void DrawCuicui(void)         // 从这里开始进行所有的绘制
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清除屏幕和深度缓存
 
-	glLoadIdentity();         // 重置当前的模型观察矩阵
-	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
-	material();
-	glTranslatef(posx, posy, -posz);         // 移入屏幕 5 个单位
-	glRotatef(xrot, 1.0f, 0.0f, 0.0f);         // 绕X轴旋转
-	glRotatef(yrot, 0.0f, 1.0f, 0.0f);         // 绕Y轴旋转
-	glRotatef(zrot, 0.0f, 0.0f, 1.0f);         // 绕Z轴旋转
-
-	glBindTexture(GL_TEXTURE_2D, texture[0]);      // 选择纹理
-	glBegin(GL_QUADS); //前面
-	GLfloat a = 10, b = 20;
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-bxlen / 2.0-a, -ylen / 2.0-b, bzlen / 2.0); // 纹理和四边形的左下
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(bxlen / 2.0+a, -ylen / 2.0-b, bzlen / 2.0); // 纹理和四边形的右下
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0+a, ylen / 2.0+b, zlen / 2.0); // 纹理和四边形的右上
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0-a, ylen / 2.0+b, zlen / 2.0); // 纹理和四边形的左上
-	glEnd();
-
-	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	glBegin(GL_QUADS);													 // 后面
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的右下
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的右上
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的左上
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的左下
-	glEnd();
-
-	glBindTexture(GL_TEXTURE_2D, texture[2]);
-	glBegin(GL_QUADS);	// 顶面
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的左上
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的左下
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的右下
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的右上
-	glEnd();
-
-	glBindTexture(GL_TEXTURE_2D, texture[3]);
-	glBegin(GL_QUADS);															 // 底面
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的右上
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的左上
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的左下
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的右下
-	glEnd();
-
-	glBindTexture(GL_TEXTURE_2D, texture[4]);
-	glBegin(GL_QUADS);// 左面
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的左下
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的右下
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的右上
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的左上
-	glEnd();
-
-	glBindTexture(GL_TEXTURE_2D, texture[5]);
-	glBegin(GL_QUADS);	// 右面
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的右下
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的右上
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的左上
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的左下
-	glEnd();
-
-	glFlush();
-	glutSwapBuffers();
-}
 vector<string> FindFile(std::string path) {
 	long Handle;
 	struct _finddata_t FileInfo;
@@ -566,12 +521,6 @@ void generate_image_for_one_folder(json Json, string input_path, string save_pat
 		init(input_path, Json["textures"]);  //初始化资源,这里一定要在创建窗口以后，不然会无效。
 		glutDisplayFunc(DrawTusi);
 		break;
-	case 5:
-		xlen = Json["xlen"]; ylen = Json["ylen"]; zlen = Json["zlen"];
-		bxlen = Json["bxlen"]; bzlen = Json["bzlen"];
-		init(input_path, Json["textures"]);  //初始化资源,这里一定要在创建窗口以后，不然会无效。
-		glutDisplayFunc(DrawCuicui);
-		break;
 	default:
 		cout << "not supported type" << endl;
 		break;
@@ -673,8 +622,8 @@ int main(int argc, char *argv[])
 
 	input_path = "G:\\append";
 	save_path = "G:\\temp_result";
-	posx = 0, posy = 0, posz = 100; //use for image
-	Slice = 20;
+	posx = 10, posy = 0, posz = 170; //use for image
+	Slice = 10;
 	gen_traj = false;
 	use_main = true;
 	frame_num = 100;
