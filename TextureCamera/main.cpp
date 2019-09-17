@@ -143,13 +143,13 @@ void DrawCube(void)         // 从这里开始进行所有的绘制
 	glRotatef(zrot, 0.0f, 0.0f, 1.0f);         // 绕Z轴旋转
 
 	glBindTexture(GL_TEXTURE_2D, texture[0]);      // 选择纹理
-	//glBegin(GL_QUADS); //前面
-	//glNormal3f(0, 0, 1.0);
-	//glTexCoord2f(0.0f, 0.0f); glVertex3f(-bxlen/2.0, -ylen/2.0, bzlen/2.0); // 纹理和四边形的左下
-	//glTexCoord2f(1.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的右下
-	//glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的右上
-	//glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的左上
-	//glEnd();
+	glBegin(GL_QUADS); //前面
+	glNormal3f(0, 0, 1.0);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-bxlen/2.0, -ylen/2.0, bzlen/2.0); // 纹理和四边形的左下
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(bxlen / 2.0, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的右下
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的右上
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0, ylen / 2.0, zlen / 2.0); // 纹理和四边形的左上
+	glEnd();
 
 	GLint nSlice = 10;
 	GLfloat t = 0, dt = 1.0 / nSlice;

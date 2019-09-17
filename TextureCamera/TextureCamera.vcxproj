@@ -27,7 +27,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A98AB052-E29F-4E1A-8440-1FC363AF5A61}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Cube</RootNamespace>
+    <RootNamespace>TextureCamera</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>TectureCamera</ProjectName>
   </PropertyGroup>
