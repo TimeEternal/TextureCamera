@@ -6,10 +6,11 @@ GLfloat xlen, ylen, zlen, bxlen, bzlen;
 string input_path, save_path;
 GLuint texture[10];
 GLint  Slice, split, frame_num;
-bool gen_traj;
-GLfloat fx = 720.094219155800, fy = 717.971575468539, u0 = 751.717811957061, v0 = 364.267253691764;
+bool gen_traj,use_main;
+GLfloat fx, fy, u0, v0;
 GLfloat posx, posy, posz;
 vector<float> vxlen, vylen, vzlen, vbxlen, vbzlen;
+
 
 
 int createDirectory(const std::string &directoryPath)
@@ -254,7 +255,10 @@ void DrawGyrator() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清除屏幕和深度缓存
 
 	glLoadIdentity();         // 重置当前的模型观察矩阵
-	gluLookAt(0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0);
+	if (use_main)
+		gluLookAt(16.8766, -7.7111, -212.7446, 16.9178, -7.5148, -211.7650, 0.0163, -0.9805, 0.1958);
+	else
+		gluLookAt(-5.1259, -8.2751, -196.5466, -4.5663, -8.0399, -195.7519, 0.2259, -0.9659, 0.1268);
 	material();
 	GLfloat mid = 0;
 	//移动至景深，旋转绘图，上移至中心
@@ -480,28 +484,28 @@ void init(string input_folder, vector<string> texs)
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glEnable(GL_TEXTURE_2D);
 
-	glEnable(GL_LIGHTING);
+	//glEnable(GL_LIGHTING);
 	//glEnable(GL_COLOR_MATERIAL);//启用颜色追踪  
 	//glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 
-	GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0f }; //RGBA模式的环境光，全白光
-	GLfloat light_diffuse[] = { 0.0, 0.0, 0.0, 1.0f }; //RGBA模式的漫反射光，全白光
-	GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0f };  //RGBA模式下的镜面光 ，全白光
-	GLfloat light_position[] = { posx, posy, -posz+1000, 0.0f }; //光源的位置
-	GLfloat light_direction[] = { 0.0,0.0,1.0 };//光源的位置
-	GLfloat attenuation = 0.1;
+	//GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0f }; //RGBA模式的环境光，全白光
+	//GLfloat light_diffuse[] = { 0.0, 0.0, 0.0, 1.0f }; //RGBA模式的漫反射光，全白光
+	//GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0f };  //RGBA模式下的镜面光 ，全白光
+	//GLfloat light_position[] = { posx, posy, -posz+1000, 0.0f }; //光源的位置
+	//GLfloat light_direction[] = { 0.0,0.0,1.0 };//光源的位置
+	//GLfloat attenuation = 0.1;
 
 	//GLfloat  whiteLight[] = { 0.5, 0.5, 0.5, 1.0f };
 	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, whiteLight);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
+	//glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+	//glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	//glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
 	//glLightfv(GL_LIGHT0, GL_LINEAR_ATTENUATION, &attenuation);
 	//glLightfv(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, &attenuation);
 
-	glEnable(GL_LIGHT0);
+	//glEnable(GL_LIGHT0);
 
 
 	glMatrixMode(GL_MODELVIEW);
@@ -515,43 +519,19 @@ void reshape(GLsizei width, GLsizei height)
 	
 	glMatrixMode(GL_PROJECTION);    //设置矩阵模式为投影变换矩阵，
 	glLoadIdentity();                //变为单位矩阵
-	GLdouble Near = 10.0, Far = 2160.0; //使用毫米为单位
-	GLdouble left=-u0*Near/fx, right=(width-u0)*Near/fx, bottom=(v0-height)*Near/fy, top=v0*Near/fy;
+	GLfloat Near = 10.0, Far = 2160.0; //使用毫米为单位
+	GLfloat left=-u0*Near/fx, right=(width-u0)*Near/fx, bottom=(v0-height)*Near/fy, top=v0*Near/fy;
 	glFrustum(left, right, bottom, top, Near, Far);
 	glViewport(0, 0, width, height);        //设置视口
 	glMatrixMode(GL_MODELVIEW);        //设置矩阵模式为视图矩阵(模型)
 	glLoadIdentity();                //变为单位矩阵
 }
 
-//键盘输入事件函数
-void keyboard(unsigned char key, int x, int y)
-{
-	switch (key)
-	{
-	case 'x':    //当按下键盘上d时，以沿X轴旋转为主
-		xrot += 1.0f;   //设置旋转增量
-		glutPostRedisplay();   //重绘函数
-		break;
-	case 'y':
-		yrot += 1.0f;
-		glutPostRedisplay();
-		break;
-	case 'z':
-		zrot += 1.0f;
-		glutPostRedisplay();
-		break;
-	case 's':
-		saveSceneImage("res.png");
-		break;
-	default:
-		break;
-	}
-}
+
 
 void generate_image_for_one_folder(json Json, string input_path, string save_path) {
 	GLint window = glutCreateWindow("OpenGL纹理贴图");
 	glutReshapeFunc(reshape);                //绘制图形时的回调
-	glutKeyboardFunc(keyboard);
 
 
 	int type = Json["type"];
@@ -575,7 +555,6 @@ void generate_image_for_one_folder(json Json, string input_path, string save_pat
 		glutDisplayFunc(DrawCylinder);
 		break;
 	case 3:
-		cout << Json["xlen"];
 		vxlen = Json["xlen"].get<std::vector<GLfloat>>(); vylen = Json["ylen"].get<std::vector<GLfloat>>(); vzlen = Json["zlen"].get<std::vector<GLfloat>>();
 		vbxlen = Json["bxlen"].get<std::vector<GLfloat>>(); vbzlen = Json["bzlen"].get<std::vector<GLfloat>>(); split = Json["split"];
 		init(input_path, Json["textures"]);  //初始化资源,这里一定要在创建窗口以后，不然会无效。
@@ -620,8 +599,8 @@ void generate_image_for_one_folder(json Json, string input_path, string save_pat
 		while (index < Slice*Slice) {
 			GLint temp = index;
 
-			//xrot = (temp % Slice)*angle_ps; temp /= Slice;
-			//yrot = (temp % Slice)*angle_ps; temp /= Slice;
+			xrot = (temp % Slice)*angle_ps; temp /= Slice;
+			yrot = (temp % Slice)*angle_ps; temp /= Slice;
 			// zrot = (temp % Slice)*angle_ps;
 			glutMainLoopEvent();
 			if (type == 0 && (xrot == 72 || xrot == 108 || xrot == 252 || xrot == 288) && (yrot == 72 || yrot == 108 || yrot == 252 || yrot == 288)) {
@@ -691,14 +670,15 @@ int main(int argc, char *argv[])
 	input_path = argv[1];
 	save_path = argv[2];
 	Slice = atoi(argv[3]);*/
-	xrot = 0;
+
 	input_path = "G:\\append";
 	save_path = "G:\\temp_result";
-	posx = -50, posy = 10, posz = 300; //use for image
+	posx = 0, posy = 0, posz = 100; //use for image
 	Slice = 20;
 	gen_traj = false;
+	use_main = true;
 	frame_num = 100;
-
+	fx = 720.094219155800, fy = 717.971575468539, u0 = 751.717811957061, v0 = 364.267253691764;
 
 	glutInit(&argc, argv);  //固定格式
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH | GLUT_ALPHA); //注意这里
