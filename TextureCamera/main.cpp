@@ -10,6 +10,7 @@ bool gen_traj,use_main;
 GLfloat fx, fy, u0, v0;
 GLfloat posx, posy, posz;
 vector<float> vxlen, vylen, vzlen, vbxlen, vbzlen;
+json class2id;
 
 struct point {
 	float x, y, z;
@@ -371,18 +372,18 @@ void DrawTusi(void)         // 从这里开始进行所有的绘制
 
 	glBindTexture(GL_TEXTURE_2D, texture[2]);
 	glBegin(GL_QUADS);	// 顶面
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0-30, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的左上
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-xlen / 2.0-30, ylen / 2.0, zlen / 2.0); // 纹理和四边形的左下
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(xlen / 2.0+30, ylen / 2.0, zlen / 2.0); // 纹理和四边形的右下
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0+30, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的右上
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-xlen / 2.0-3, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的左上
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-xlen / 2.0-3, ylen / 2.0, zlen / 2.0); // 纹理和四边形的左下
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(xlen / 2.0+3, ylen / 2.0, zlen / 2.0); // 纹理和四边形的右下
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(xlen / 2.0+3, ylen / 2.0, -zlen / 2.0); // 纹理和四边形的右上
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, texture[3]);
 	glBegin(GL_QUADS);	// 底面
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-bxlen / 2.0-30, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的右上
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(bxlen / 2.0+30, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的左上
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen / 2.0+30, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的左下
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen / 2.0-30, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的右下
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-bxlen / 2.0-3, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的右上
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(bxlen / 2.0+3, -ylen / 2.0, -bzlen / 2.0); // 纹理和四边形的左上
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(bxlen / 2.0+3, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的左下
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-bxlen / 2.0-3, -ylen / 2.0, bzlen / 2.0); // 纹理和四边形的右下
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, texture[4]);
@@ -488,7 +489,7 @@ void reshape(GLsizei width, GLsizei height)
 
 
 
-void generate_image_for_one_folder(json Json, string input_path, string save_path) {
+void generate_image_for_one_folder(json Json, string input_path, string save_path, string kind) {
 	GLint window = glutCreateWindow("OpenGL纹理贴图");
 	glutReshapeFunc(reshape);                //绘制图形时的回调
 
@@ -531,22 +532,23 @@ void generate_image_for_one_folder(json Json, string input_path, string save_pat
 	}
 	GLint index = 0; GLfloat angle_ps = 360.0 / Slice;
 	if (gen_traj) {
-		posx = -400, posy = -150, posz = 500;
-		xrot = 0; yrot = 0; zrot = 0;
-		GLfloat angle = 5, length = 15;
-		ofstream out(save_path + "\\" + "point.txt");
-		while (index < frame_num) {
+		if (kind.find("_") != string::npos) {
+			kind = kind.substr(0, kind.find("_"));
+		}
+		int k = class2id[kind];
+		int size = trajectory[k].size();
+		vector<point> T = trajectory[k][0];
+		xrot = 0; yrot = 180; zrot = 180;
+		while (index < T.size()) {
 			GLint temp = index;
-			posx += dislength(gen)*length; posy += dislength(gen)*length; posz += dislength(gen)*length;
-			xrot += disangle(gen)*angle; yrot += disangle(gen)*angle; zrot += disangle(gen)*angle;
+			posx = T[index].x; posy = T[index].y; posz = T[index].z;
+			xrot += disangle(gen); //yrot += disangle(gen)*angle; zrot += disangle(gen)*angle;
 			glutMainLoopEvent();
 			saveSceneImage(save_path + "\\" + to_string(index) + ".png");
-			out << posx << " " << posy << " " << posz << " " << xrot << " " << yrot << " " << zrot << endl;
 			glutPostRedisplay();  //重画，相当于重新调用Display(),改编后的变量得以传给绘制函数
 			index++;
 		}
 		glutDestroyWindow(window);
-		out.close();
 	}
 	else {
 		while (index < Slice*Slice) {
@@ -569,7 +571,7 @@ void generate_image_for_one_folder(json Json, string input_path, string save_pat
 	
 }
 
-void process_folder(string input_folder, string save_folder) {
+void process_folder(string input_folder, string save_folder, string kind="") {
 	cout << input_folder << endl;
 
 	const char *save_folder_c = save_folder.c_str();
@@ -593,14 +595,14 @@ void process_folder(string input_folder, string save_folder) {
 			continue;
 
 		if (fileInfo.attrib & _A_SUBDIR) {
-			process_folder(input_folder + "\\" + filename, save_folder + "\\" + filename);
+			process_folder(input_folder + "\\" + filename, save_folder + "\\" + filename, filename);
 		}
 		else {
 			string postfix = filename.substr(filename.length() - 4, filename.length());	//后缀
 			if (postfix.compare("json") == 0 ) {
 				fstream fin(input_folder+"\\"+filename); json Json;
 				fin >> Json; fin.close();
-				generate_image_for_one_folder(Json, input_folder, save_folder);
+				generate_image_for_one_folder(Json, input_folder, save_folder, kind);
 			}
 		}
 
@@ -658,19 +660,22 @@ int main(int argc, char *argv[])
 	Slice = atoi(argv[3]);*/
 
 	get_trajectory();
-	
-
-	input_path = "G:\\append";
-	save_path = "G:\\temp_result";
-	posx = 10, posy = 0, posz = 170; //use for image
+	fstream fin("class2id_new.json");
+	fin >> class2id;
+	gen_traj = true;
+	use_main = false;
+	input_path = "G:\\sample_generate_new\\ordinary_template";
+	save_path = "G:\\sample_generate_new\\traj_ordinary_sub";
+	posx = 10, posy = 0, posz = 170; //use for image, not trajectory
 	Slice = 10;
-	gen_traj = false;
-	use_main = true;
-	frame_num = 100;
-	// sub
-	fx = 719.746814929738, fy = 717.772081837273, u0 = 749.707739198625, v0 = 363.640069007236;
-	// main
-	// fx = 930.882715657638, fy = 930.127415304179, u0 = 719.245819050168, v0 = 404.364554839123;
+
+	if (!use_main)
+		// sub
+		fx = 719.746814929738, fy = 717.772081837273, u0 = 749.707739198625, v0 = 363.640069007236;
+	else
+		// main
+		fx = 930.882715657638, fy = 930.127415304179, u0 = 719.245819050168, v0 = 404.364554839123;
+
 	glutInit(&argc, argv);  //固定格式
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH | GLUT_ALPHA); //注意这里
 	glutInitWindowSize(1280, 800);    //显示框的大小
