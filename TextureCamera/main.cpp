@@ -11,7 +11,11 @@ GLfloat fx, fy, u0, v0;
 GLfloat posx, posy, posz;
 vector<float> vxlen, vylen, vzlen, vbxlen, vbzlen;
 
+struct point {
+	float x, y, z;
+};
 
+vector<vector<point>> trajectory[18];
 
 int createDirectory(const std::string &directoryPath)
 {
@@ -606,6 +610,39 @@ void process_folder(string input_folder, string save_folder) {
 
 }
 
+void get_trajectory(string path="G:/smart_shelf/数据集/trajectory") {
+	long hFile = 0;
+	struct _finddata_t fileInfo;
+	string pathName;
+
+	hFile = _findfirst(pathName.assign(path).append("\\*").c_str(), &fileInfo);
+
+	if (hFile == -1) {
+		cout << "Failed to find first file while process folder!\n";
+		return;
+	}
+
+	do {
+		string filename = fileInfo.name;
+		if (strcmp(fileInfo.name, ".") == 0 || strcmp(fileInfo.name, "..") == 0)
+			continue;
+
+		string postfix = filename.substr(filename.length() - 3, filename.length());	//后缀
+		int kind = atoi(filename.substr(0, filename.find('_')).c_str());
+		// cout << filename <<" " << filename.substr(0, filename.find('_')) << endl;
+		if (postfix.compare("txt") == 0) {
+			point x; vector<point> temp;
+			fstream fin(path + "\\" + filename);
+			while (fin >> x.x >> x.y >> x.z) {
+				temp.push_back(x);
+			}
+			trajectory[kind].push_back(temp);
+		}
+
+	} while (_findnext(hFile, &fileInfo) == 0);
+
+	_findclose(hFile);    // 关闭搜索句柄
+}
 
 int main(int argc, char *argv[])
 {
@@ -620,6 +657,9 @@ int main(int argc, char *argv[])
 	save_path = argv[2];
 	Slice = atoi(argv[3]);*/
 
+	get_trajectory();
+	
+
 	input_path = "G:\\append";
 	save_path = "G:\\temp_result";
 	posx = 10, posy = 0, posz = 170; //use for image
@@ -627,8 +667,10 @@ int main(int argc, char *argv[])
 	gen_traj = false;
 	use_main = true;
 	frame_num = 100;
-	fx = 720.094219155800, fy = 717.971575468539, u0 = 751.717811957061, v0 = 364.267253691764;
-
+	// sub
+	fx = 719.746814929738, fy = 717.772081837273, u0 = 749.707739198625, v0 = 363.640069007236;
+	// main
+	// fx = 930.882715657638, fy = 930.127415304179, u0 = 719.245819050168, v0 = 404.364554839123;
 	glutInit(&argc, argv);  //固定格式
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH | GLUT_ALPHA); //注意这里
 	glutInitWindowSize(1280, 800);    //显示框的大小
